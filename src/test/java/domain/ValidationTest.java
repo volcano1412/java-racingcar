@@ -13,12 +13,15 @@ public class ValidationTest {
 
 	private String inputStr;
 	private Validation validation;
+	private String[] arrayStr;
 
 	@BeforeEach
 	void init() {
 
-		inputStr = "2 + 3 * 4 / 2";		// 테스트 기준 계산식
+		inputStr = "2 + 3 * 4 /";		// 테스트 기준 계산식
 		validation = new Validation(inputStr);
+		Calculator calculator = new Calculator(inputStr);
+		arrayStr = calculator.getSplitStr();
 	}
 
 	@Test
@@ -28,19 +31,14 @@ public class ValidationTest {
 		assertThat(validation).isEqualTo(new Validation(inputStr));
 	}
 
-	@Test
-	@DisplayName("입력 값 split")
-	void inputSplitTest() {
-
-		String[] arr = validation.getSplitStr(inputStr);
-	}
-
 	@ParameterizedTest
 	@DisplayName("null, 공백 체크")
 	@ValueSource(strings = {" "})
 	void isnullChkTest(String userInput) {
 
-		assertThat(validation.isNullChk(userInput)).isTrue();
+		assertThatIllegalArgumentException().isThrownBy(()->{
+			validation.isNullChk(userInput);
+		}).withMessageMatching("null 값 입력");
 	}
 
 	@ParameterizedTest
@@ -68,51 +66,47 @@ public class ValidationTest {
 	}
 
 	@ParameterizedTest
-	@DisplayName("마지막 index 숫자체크")
-	@ValueSource(strings = {"+", "q"})
-	void lastIndexChkTest(String input) {
-
-		assertThatIllegalArgumentException().isThrownBy(()->{
-			validation.lastIndexChk(input);
-		}).withMessageMatching("마지막문자가 숫자형이 아닙니다");
-	}
-
-	@ParameterizedTest
 	@DisplayName("validation Exception처리 : null입력")
-	@CsvSource(value = {"2:1:3", "4:+:3"}, delimiter = ':')
-	void inputValidationNullTest(int index, String input, int maxIndex) {
+	@CsvSource(value = {"2:1", "4:+"}, delimiter = ':')
+	void inputValidationNullTest(int index, String input) {
 
 		assertThatIllegalArgumentException().isThrownBy(()->{
-			validation.inputValidation(index, null, maxIndex);
+			validation.inputTypeValidation(index, null);
 		}).withMessageMatching("null 값 입력");
 	}
 
 	@ParameterizedTest
 	@DisplayName("validation Exception처리 : index별 유효성")
-	@CsvSource(value = {"2:+:3","1:4:3"}, delimiter = ':')
-	void inputValidationTest(int index, String input, int maxIndex) {
+	@CsvSource(value = {"2:+","1:4"}, delimiter = ':')
+	void inputTypeValidationTest(int index, String input) {
 
 		assertThatIllegalArgumentException().isThrownBy(()->{
-			validation.inputValidation(index, input, maxIndex);
+			validation.inputTypeValidation(index, input);
 		}).withMessageMatching("index에 해당하는 타입이 맞지 않음");
 	}
 
-	@ParameterizedTest
-	@DisplayName("validation Exception처리 : 마지막index 유효성")
-	@CsvSource(value = {"3:*:3"}, delimiter = ':')
-	void lastInputValidationTest(int index, String input, int maxIndex) {
+	@Test
+	@DisplayName("수식 길이 확인")
+	void formulaLengthTest() {
 
 		assertThatIllegalArgumentException().isThrownBy(()->{
-			validation.inputValidation(index, input, maxIndex);
-		}).withMessageMatching("마지막문자가 숫자형이 아닙니다");
+			validation.formulaLength(arrayStr);
+		}).withMessageMatching("수식이 맞지 않습니다");
 	}
 
 	@Test
-	@DisplayName("validation 반복 호출")
-	void inputValidationRepeatTest() {
+	@DisplayName("input값 validation")
+	void inputValidationTest() {
 
-		assertThatCode(() -> {
-			validation.inputValidationRepeat();
-		}).doesNotThrowAnyException();
+		assertThatIllegalArgumentException().isThrownBy(()->{
+			validation.inputValidation(arrayStr);
+		}).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	@DisplayName("validation : 예외처리")
+	void validationExceptionTest() {
+
+			assertThat(validation.validationException(arrayStr)).isTrue();
 	}
 }

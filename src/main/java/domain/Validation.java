@@ -5,12 +5,15 @@ import java.util.regex.Pattern;
 
 public class Validation {
 
-	private final String inputStr;
+	public static final String CALCULATOR_SYMBOL_REGEX = "^[-|+|*|/]$";
+	private String inputStr;
 
 	public Validation(String inputStr) {
 
 		this.inputStr = inputStr;
 	}
+
+	public Validation() {}
 
 	@Override
 	public boolean equals(Object o) {
@@ -20,6 +23,7 @@ public class Validation {
 		if (o == null || getClass() != o.getClass())
 			return false;
 		Validation that = (Validation)o;
+
 		return Objects.equals(inputStr, that.inputStr);
 	}
 
@@ -29,73 +33,80 @@ public class Validation {
 		return Objects.hash(inputStr);
 	}
 
-	public String[] getSplitStr(String inputStr) {
-
-		return inputStr.split(" ");
-	}
-
-	public Boolean isNullChk(String userInput) {
+	public void isNullChk(String userInput) {
 
 		if (userInput == null) {
-			return true;
+			throw new IllegalArgumentException("null 입력");
 		}
-		if (userInput.equals(" ")) {
-			return true;
+
+		if (userInput.isEmpty()) {
+			throw new IllegalArgumentException("비어 있는 문자열");
 		}
-		return false;
 	}
 
 	public Boolean isNumberChk(String userInput) {
 
 		try {
 			Integer.parseInt(userInput);
-			return false;
-		} catch (NumberFormatException numberFormatException) {
 			return true;
+		} catch (NumberFormatException numberFormatException) {
+			return false;
 		}
+	}
+
+	public boolean isNotNumber(String userInput) {
+
+		return !isNumberChk(userInput);
 	}
 
 	public Boolean isOperatorChk(String userInput) {
 
-		if (!Pattern.matches(Calculator.CALCULATOR_SYMBOL_REGEX, userInput)) {
+		if (!Pattern.matches(CALCULATOR_SYMBOL_REGEX, userInput)) {
 			return true;
 		}
+
 		return false;
 	}
 
 	public boolean isIndexChk(int index, String userInput) {
 
 		if (index % 2 == 0) {
-			return isNumberChk(userInput);
+			return isNotNumber(userInput);
 		}
+
 		return isOperatorChk(userInput);
 	}
 
-	public void inputValidation(int index, String input, int maxIndex) {
+	public void inputTypeValidation(int index, String input) {
 
-		if (isNullChk(input)) {
-			throw new IllegalArgumentException("null 값 입력");
-		}
+		isNullChk(input);
 		if (isIndexChk(index, input)) {
 			throw new IllegalArgumentException("index에 해당하는 타입이 맞지 않음");
 		}
-		if (maxIndex == index) {
-			lastIndexChk(input);
+	}
+
+	public void formulaLength(String[] arrayStr) {
+
+		if (arrayStr.length % 2 == 0) {
+			throw new IllegalArgumentException("수식이 맞지 않습니다");
 		}
 	}
 
-	public void lastIndexChk(String input) {
+	public void inputValidation(String[] arrayStr) {
 
-		if (isNumberChk(input)) {
-			throw new IllegalArgumentException("마지막문자가 숫자형이 아닙니다");
+		formulaLength(arrayStr);
+		for (int i = 0; i < arrayStr.length; i++) {
+			inputTypeValidation(i, arrayStr[i]);
 		}
 	}
 
-	public void inputValidationRepeat() {
+	public Boolean validationException(String[] arrayStr) {
 
-		String[] arrStr = getSplitStr(inputStr);
-		for (int i = 0; i < arrStr.length; i++) {
-			inputValidation(i, arrStr[i], arrStr.length);
+		try {
+			inputValidation(arrayStr);
+			return false;
+		} catch (IllegalArgumentException illegalArgumentException) {
+			return true;
 		}
 	}
 }
